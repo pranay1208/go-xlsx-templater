@@ -224,6 +224,8 @@ func renderCell(cell *xlsx.Cell, ctx interface{}) error {
 		cell.NumFmt = cellFormat
 	} else if err_ctd == nil {
 		cell.SetDateTime(ctd)
+	} else if cell.Formula() != "" {
+		cell.SetFormula(cell.Formula())
 	} else {
 		cell.Value = out
 	}
