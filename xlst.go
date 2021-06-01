@@ -214,11 +214,11 @@ func renderCell(cell *xlsx.Cell, ctx interface{}) error {
 	cf, err_cf := strconv.ParseFloat(out, 64)
 	ctd, err_ctd := time.Parse(time.RFC3339, out)
 
-	if err_ci != nil {
+	if err_ci == nil {
 		cell.SetInt(ci)
-	} else if err_cf != nil {
+	} else if err_cf == nil {
 		cell.SetFloat(cf)
-	} else if err_ctd != nil {
+	} else if err_ctd == nil {
 		cell.SetDateTime(ctd)
 	} else {
 		cell.Value = out
