@@ -210,14 +210,18 @@ func renderCell(cell *xlsx.Cell, ctx interface{}) error {
 		return err
 	}
 
+	cellFormat := cell.GetNumberFormat()
+
 	ci, err_ci := strconv.Atoi(out)
 	cf, err_cf := strconv.ParseFloat(out, 64)
 	ctd, err_ctd := time.Parse(time.RFC3339, out)
 
 	if err_ci == nil {
 		cell.SetInt(ci)
+		cell.NumFmt = cellFormat
 	} else if err_cf == nil {
 		cell.SetFloat(cf)
+		cell.NumFmt = cellFormat
 	} else if err_ctd == nil {
 		cell.SetDateTime(ctd)
 	} else {
