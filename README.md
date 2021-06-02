@@ -1,10 +1,10 @@
-## Fork of "github.com/ivahaev/go-xlsx-templater"
+## Fork of github.com/ivahaev/go-xlsx-templater
 
 Difference:
 
 - Set cell value as numeric type (instead of string) if result of templating can be parsed as integer or float
 - Saving cell format for numeric data types (integer or float) what have been set in xlsx template
-
+- Dont break formula in cell after templating
 
 # go-xlsx-templater
 Simple **.xlsx** (Excel XML document) template based document generator using handlebars.
