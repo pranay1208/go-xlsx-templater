@@ -185,6 +185,10 @@ func cloneCell(from, to *xlsx.Cell, options *Options) {
 	to.VMerge = from.VMerge
 	to.Hidden = from.Hidden
 	to.NumFmt = from.NumFmt
+
+	if from.Formula() != "" {
+		to.SetStringFormula(from.Formula())
+	}
 }
 
 func cloneRow(from, to *xlsx.Row, options *Options) {
