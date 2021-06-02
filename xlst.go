@@ -216,7 +216,9 @@ func renderCell(cell *xlsx.Cell, ctx interface{}) error {
 	cf, err_cf := strconv.ParseFloat(out, 64)
 	ctd, err_ctd := time.Parse(time.RFC3339, out)
 
-	if err_ci == nil {
+	if cell.Formula() != "" {
+		// nothing to do, keep original cell state
+	} else if err_ci == nil {
 		cell.SetInt(ci)
 		cell.NumFmt = cellFormat
 	} else if err_cf == nil {
@@ -224,8 +226,6 @@ func renderCell(cell *xlsx.Cell, ctx interface{}) error {
 		cell.NumFmt = cellFormat
 	} else if err_ctd == nil {
 		cell.SetDateTime(ctd)
-	} else if cell.Formula() != "" {
-		cell.SetFormula(cell.Formula())
 	} else {
 		cell.Value = out
 	}
