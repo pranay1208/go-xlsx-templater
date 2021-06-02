@@ -20,7 +20,7 @@ Thanks to `github.com/tealeg/xlsx` and `github.com/aymerick/raymond` for useful 
 ## Installation
 
 ```
-    go get -u "github.com/ivahaev/go-xlsx-templater"
+    go get -u "github.com/Sabaverus/go-xlsx-templater"
 ```
 
 ## Usage
@@ -28,7 +28,7 @@ Thanks to `github.com/tealeg/xlsx` and `github.com/aymerick/raymond` for useful 
 ### Import to your project
 
 ```go
-    import "github.com/ivahaev/go-xlsx-templater"
+    import "github.com/Sabaverus/go-xlsx-templater"
 ```
 
 ### Prepare **template.xlsx** template.
