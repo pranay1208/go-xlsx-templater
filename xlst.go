@@ -187,7 +187,7 @@ func cloneCell(from, to *xlsx.Cell, options *Options) {
 	to.NumFmt = from.NumFmt
 
 	if from.Formula() != "" {
-		to.SetStringFormula(from.Formula())
+		to.SetFormula(from.Formula())
 	}
 }
 
