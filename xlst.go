@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/aymerick/raymond"
-	"github.com/tealeg/xlsx"
+	xlsx "github.com/tealeg/xlsx/v3"
 )
 
 var (
@@ -19,6 +19,8 @@ var (
 	rangeRgx    = regexp.MustCompile(`\{\{\s*range\s+(\w+)\s*\}\}`)
 	rangeEndRgx = regexp.MustCompile(`\{\{\s*end\s*\}\}`)
 )
+
+var ErrEndIterationEarly = errors.New("error to end iteration early")
 
 // Xlst Represents template struct
 type Xlst struct {
@@ -63,14 +65,15 @@ func (m *Xlst) RenderWithOptions(in interface{}, options *Options) error {
 		report.AddSheet(sheet.Name)
 		cloneSheet(sheet, report.Sheets[si])
 
-		err := renderRows(report.Sheets[si], sheet.Rows, ctx, options)
+		err := renderRows(report.Sheets[si], sheet, 0, sheet.MaxRow, ctx, options)
 		if err != nil {
 			return err
 		}
 
-		for _, col := range sheet.Cols {
-			report.Sheets[si].Cols = append(report.Sheets[si].Cols, col)
-		}
+		sheet.Cols.ForEach(func(_ int, col *xlsx.Col) {
+			report.Sheets[si].Cols.Add(col)
+		})
+
 	}
 	m.report = report
 
@@ -90,7 +93,7 @@ func (m *Xlst) ReadTemplate(path string) error {
 // Save saves generated report to disk
 func (m *Xlst) Save(path string) error {
 	if m.report == nil {
-		return errors.New("Report was not generated")
+		return errors.New("report was not generated")
 	}
 	return m.report.Save(path)
 }
@@ -98,34 +101,40 @@ func (m *Xlst) Save(path string) error {
 // Write writes generated report to provided writer
 func (m *Xlst) Write(writer io.Writer) error {
 	if m.report == nil {
-		return errors.New("Report was not generated")
+		return errors.New("report was not generated")
 	}
 	return m.report.Write(writer)
 }
 
-func renderRows(sheet *xlsx.Sheet, rows []*xlsx.Row, ctx map[string]interface{}, options *Options) error {
-	for ri := 0; ri < len(rows); ri++ {
-		row := rows[ri]
+func renderRows(sheet *xlsx.Sheet, template *xlsx.Sheet, startIndex int, endIndex int, ctx map[string]interface{}, options *Options) error {
+	for ri := startIndex; ri < endIndex; ri++ {
+		row, err := template.Row(ri)
+		if err != nil {
+			return errors.Join(fmt.Errorf("error reading row %d", ri), err)
+		}
 
 		rangeProp := getRangeProp(row)
 		if rangeProp != "" {
 			ri++
 
-			rangeEndIndex := getRangeEndIndex(rows[ri:])
+			rangeEndIndex, err := getRangeEndIndex(sheet, ri)
+			if err != nil {
+				return err
+			}
 			if rangeEndIndex == -1 {
-				return fmt.Errorf("End of range %q not found", rangeProp)
+				return fmt.Errorf("end of range %q not found", rangeProp)
 			}
 
 			rangeEndIndex += ri
 
 			rangeCtx := getRangeCtx(ctx, rangeProp)
 			if rangeCtx == nil {
-				return fmt.Errorf("Not expected context property for range %q", rangeProp)
+				return fmt.Errorf("not expected context property for range %q", rangeProp)
 			}
 
 			for idx := range rangeCtx {
 				localCtx := mergeCtx(rangeCtx[idx], ctx)
-				err := renderRows(sheet, rows[ri:rangeEndIndex], localCtx, options)
+				err := renderRows(sheet, template, ri, rangeEndIndex, localCtx, options)
 				if err != nil {
 					return err
 				}
@@ -192,14 +201,15 @@ func cloneCell(from, to *xlsx.Cell, options *Options) {
 }
 
 func cloneRow(from, to *xlsx.Row, options *Options) {
-	if from.Height != 0 {
-		to.SetHeight(from.Height)
+	if from.GetHeight() != 0 {
+		to.SetHeight(from.GetHeight())
 	}
 
-	for _, cell := range from.Cells {
+	from.ForEachCell(func(c *xlsx.Cell) error {
 		newCell := to.AddCell()
-		cloneCell(cell, newCell, options)
-	}
+		cloneCell(c, newCell, options)
+		return nil
+	})
 }
 
 func renderCell(cell *xlsx.Cell, ctx interface{}) error {
@@ -231,14 +241,14 @@ func renderCell(cell *xlsx.Cell, ctx interface{}) error {
 	} else if err_ctd == nil {
 		cell.SetDateTime(ctd)
 	} else {
-		cell.Value = out
+		cell.SetValue(out)
 	}
 
 	return nil
 }
 
 func cloneSheet(from, to *xlsx.Sheet) {
-	for _, col := range from.Cols {
+	from.Cols.ForEach(func(_ int, col *xlsx.Col) {
 		newCol := xlsx.Col{}
 		style := col.GetStyle()
 		newCol.SetStyle(style)
@@ -247,8 +257,8 @@ func cloneSheet(from, to *xlsx.Sheet) {
 		newCol.Collapsed = col.Collapsed
 		newCol.Min = col.Min
 		newCol.Max = col.Max
-		to.Cols = append(to.Cols, &newCol)
-	}
+		to.Cols.Add(&newCol)
+	})
 }
 
 func getCtx(in interface{}, i int) map[string]interface{} {
@@ -307,58 +317,67 @@ func isArray(in map[string]interface{}, prop string) bool {
 }
 
 func getListProp(in *xlsx.Row) string {
-	for _, cell := range in.Cells {
-		if cell.Value == "" {
-			continue
-		}
+	matchFoundInFn := ""
+	in.ForEachCell(func(cell *xlsx.Cell) error {
 		if match := rgx.FindAllStringSubmatch(cell.Value, -1); match != nil {
-			return match[0][1]
+			matchFoundInFn = match[0][1]
+			return ErrEndIterationEarly
 		}
-	}
-	return ""
+		return nil
+	}, xlsx.SkipEmptyCells)
+
+	return matchFoundInFn
 }
 
 func getRangeProp(in *xlsx.Row) string {
-	if len(in.Cells) != 0 {
-		match := rangeRgx.FindAllStringSubmatch(in.Cells[0].Value, -1)
-		if match != nil {
-			return match[0][1]
-		}
+	cell := in.GetCell(0)
+	match := rangeRgx.FindAllStringSubmatch(cell.Value, -1)
+	if match != nil {
+		return match[0][1]
 	}
-
 	return ""
 }
 
-func getRangeEndIndex(rows []*xlsx.Row) int {
+func getRangeEndIndex(sheet *xlsx.Sheet, rowIndex int) (int, error) {
 	var nesting int
-	for idx := 0; idx < len(rows); idx++ {
-		if len(rows[idx].Cells) == 0 {
+	for idx := rowIndex; idx < sheet.MaxRow; idx++ {
+		row, err := sheet.Row(idx)
+		if err != nil {
+			return -1, err
+		}
+		if rowHasNon0Cols(row) {
 			continue
 		}
 
-		if rangeEndRgx.MatchString(rows[idx].Cells[0].Value) {
+		cell := row.GetCell(0)
+
+		if rangeEndRgx.MatchString(cell.Value) {
 			if nesting == 0 {
-				return idx
+				return idx, nil
 			}
 
 			nesting--
 			continue
 		}
 
-		if rangeRgx.MatchString(rows[idx].Cells[0].Value) {
+		if rangeRgx.MatchString(cell.Value) {
 			nesting++
 		}
 	}
 
-	return -1
+	return -1, nil
 }
 
 func renderRow(in *xlsx.Row, ctx interface{}) error {
-	for _, cell := range in.Cells {
-		err := renderCell(cell, ctx)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	return in.ForEachCell(func(cell *xlsx.Cell) error {
+		return renderCell(cell, ctx)
+	})
+}
+
+func rowHasNon0Cols(in *xlsx.Row) bool {
+	err := in.ForEachCell(func(c *xlsx.Cell) error {
+		return ErrEndIterationEarly
+	})
+
+	return err != nil
 }

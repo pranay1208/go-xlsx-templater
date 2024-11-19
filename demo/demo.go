@@ -1,12 +1,17 @@
 package main
 
 import (
-	"github.com/ivahaev/go-xlsx-templater"
+	"fmt"
+
+	xlst "github.com/Sabaverus/go-xlsx-templater"
 )
 
 func main() {
 	doc := xlst.New()
-	doc.ReadTemplate("./template.xlsx")
+	if err := doc.ReadTemplate("./template.xlsx"); err != nil {
+		fmt.Printf("Got error reading template: %v", err)
+		return
+	}
 	ctx := map[string]interface{}{
 		"name":           "Github User",
 		"nameHeader":     "Item name",
