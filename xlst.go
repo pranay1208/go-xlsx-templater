@@ -51,6 +51,7 @@ func NewFromBinary(content []byte) (*Xlst, error) {
 
 // Render renders report and stores it in a struct
 func (m *Xlst) Render(in interface{}) error {
+	// return errors.New("abcde")
 	return m.RenderWithOptions(in, nil)
 }
 
@@ -117,7 +118,7 @@ func renderRows(sheet *xlsx.Sheet, template *xlsx.Sheet, startIndex int, endInde
 		if rangeProp != "" {
 			ri++
 
-			rangeEndIndex, err := getRangeEndIndex(sheet, ri)
+			rangeEndIndex, err := getRangeEndIndex(template, ri)
 			if err != nil {
 				return err
 			}
@@ -345,12 +346,8 @@ func getRangeEndIndex(sheet *xlsx.Sheet, rowIndex int) (int, error) {
 		if err != nil {
 			return -1, errors.Join(fmt.Errorf("error reading row %d", idx), err)
 		}
-		if rowHasNon0Cols(row) {
-			continue
-		}
 
 		cell := row.GetCell(0)
-
 		if rangeEndRgx.MatchString(cell.Value) {
 			if nesting == 0 {
 				return idx, nil
@@ -372,12 +369,4 @@ func renderRow(in *xlsx.Row, ctx interface{}) error {
 	return in.ForEachCell(func(cell *xlsx.Cell) error {
 		return renderCell(cell, ctx)
 	})
-}
-
-func rowHasNon0Cols(in *xlsx.Row) bool {
-	err := in.ForEachCell(func(c *xlsx.Cell) error {
-		return ErrEndIterationEarly
-	})
-
-	return err != nil
 }
