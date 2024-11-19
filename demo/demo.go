@@ -34,6 +34,30 @@ func main() {
 				"quantity": 24,
 			},
 		},
+		"iteratedItems": []map[string]interface{}{
+			{
+				"name": "Pen",
+				"moreItems": []map[string]interface{}{
+					{
+						"name": "Blue Pen",
+					},
+					{
+						"name": "Black Pen",
+					},
+				},
+			},
+			{
+				"name": "Pencil",
+				"moreItems": []map[string]interface{}{
+					{
+						"name": "Lead Pencil",
+					},
+					{
+						"name": "Mechanical Pencil",
+					},
+				},
+			},
+		},
 	}
 	err := doc.Render(ctx)
 	if err != nil {
