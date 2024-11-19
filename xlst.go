@@ -343,7 +343,7 @@ func getRangeEndIndex(sheet *xlsx.Sheet, rowIndex int) (int, error) {
 	for idx := rowIndex; idx < sheet.MaxRow; idx++ {
 		row, err := sheet.Row(idx)
 		if err != nil {
-			return -1, err
+			return -1, errors.Join(fmt.Errorf("error reading row %d", idx), err)
 		}
 		if rowHasNon0Cols(row) {
 			continue
