@@ -118,15 +118,13 @@ func renderRows(sheet *xlsx.Sheet, template *xlsx.Sheet, startIndex int, endInde
 		if rangeProp != "" {
 			ri++
 
-			rangeEndIndex, err := getRangeEndIndex(template, ri)
+			rangeEndIndex, err := getRangeEndIndex(template, ri, endIndex)
 			if err != nil {
 				return err
 			}
 			if rangeEndIndex == -1 {
 				return fmt.Errorf("end of range %q not found", rangeProp)
 			}
-
-			rangeEndIndex += ri
 
 			rangeCtx := getRangeCtx(ctx, rangeProp)
 			if rangeCtx == nil {
@@ -339,9 +337,9 @@ func getRangeProp(in *xlsx.Row) string {
 	return ""
 }
 
-func getRangeEndIndex(sheet *xlsx.Sheet, rowIndex int) (int, error) {
+func getRangeEndIndex(sheet *xlsx.Sheet, fromIndex, toIndex int) (int, error) {
 	var nesting int
-	for idx := rowIndex; idx < sheet.MaxRow; idx++ {
+	for idx := fromIndex; idx < toIndex; idx++ {
 		row, err := sheet.Row(idx)
 		if err != nil {
 			return -1, errors.Join(fmt.Errorf("error reading row %d", idx), err)
