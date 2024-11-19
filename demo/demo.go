@@ -22,15 +22,15 @@ func main() {
 				"quantity": 2,
 			},
 			{
-				"name":     "Pencil",
+				"name":     "Pineapple",
 				"quantity": 1,
 			},
 			{
-				"name":     "Condom",
+				"name":     "Apple",
 				"quantity": 12,
 			},
 			{
-				"name":     "Beer",
+				"name":     "Pen",
 				"quantity": 24,
 			},
 		},
