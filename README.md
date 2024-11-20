@@ -1,10 +1,8 @@
-## Fork of github.com/ivahaev/go-xlsx-templater
+## Fork of github.com/Sabverus/go-xlsx-templater
 
 Difference:
 
-- Set cell value as numeric type (instead of string) if result of templating can be parsed as integer or float
-- Saving cell format for numeric data types (integer or float) what have been set in xlsx template
-- Dont break formula in cell after templating
+- Upgraded core lib `tealeg/xlsx` to latest v3 version (i.e. v3.3.11) so that generated file can be opened in new versions of Microsoft Excel. See: https://github.com/tealeg/xlsx/releases/tag/v3.3.7
 
 # go-xlsx-templater
 Simple **.xlsx** (Excel XML document) template based document generator using handlebars.
@@ -19,8 +17,8 @@ Thanks to `github.com/tealeg/xlsx` and `github.com/aymerick/raymond` for useful 
 
 ## Installation
 
-```
-    go get -u "github.com/Sabaverus/go-xlsx-templater"
+```bash
+go get -u "github.com/pranay1208/go-xlsx-templater"
 ```
 
 ## Usage
@@ -28,7 +26,7 @@ Thanks to `github.com/tealeg/xlsx` and `github.com/aymerick/raymond` for useful 
 ### Import to your project
 
 ```go
-    import "github.com/Sabaverus/go-xlsx-templater"
+import "github.com/pranay1208/go-xlsx-templater"
 ```
 
 ### Prepare **template.xlsx** template.
