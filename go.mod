@@ -1,4 +1,4 @@
-module github.com/pranay1208/go-xlsx-templater
+module github.com/Sabaverus/go-xlsx-templater
 
 go 1.22
 

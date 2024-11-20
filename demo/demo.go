@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	xlst "github.com/pranay1208/go-xlsx-templater"
+	xlst "github.com/Sabaverus/go-xlsx-templater"
 )
 
 func main() {
