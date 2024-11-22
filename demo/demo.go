@@ -16,6 +16,7 @@ func main() {
 		"name":           "Github User",
 		"nameHeader":     "Item name",
 		"quantityHeader": "Quantity",
+		"longText":       "This text is very long and should expand if the next column is empty",
 		"items": []map[string]interface{}{
 			{
 				"name":     "Pen",
