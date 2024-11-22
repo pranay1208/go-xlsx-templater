@@ -366,5 +366,5 @@ func getRangeEndIndex(sheet *xlsx.Sheet, fromIndex, toIndex int) (int, error) {
 func renderRow(in *xlsx.Row, ctx interface{}) error {
 	return in.ForEachCell(func(cell *xlsx.Cell) error {
 		return renderCell(cell, ctx)
-	})
+	}, xlsx.SkipEmptyCells)
 }
